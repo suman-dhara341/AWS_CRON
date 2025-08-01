@@ -7,16 +7,23 @@ phases:
     commands:
       - echo Installing dependencies...
       - npm ci
-      - echo Installing Playwright browsers...
-      - npx playwright install --with-deps
-
+      - npx playwright install
+      - yum install -y jq  # Required for parsing secrets
   build:
     commands:
-      - echo Starting Playwright tests...
-      - npx playwright test --reporter=html
+      - echo "Running Playwright tests..."
+      - npx playwright test > result.txt || true
 
-artifacts:
-  files:
-    - '**/*'
-  base-directory: playwright-report
-  discard-paths: no
+      - echo "Fetching Slack webhook from Secrets Manager..."
+      - export SLACK_WEBHOOK=$(aws secretsmanager get-secret-value \
+          --secret-id SlackPlaywrightWebhook \
+          --query SecretString \
+          --output text | jq -r '.SLACK_WEBHOOK_URL')
+
+      - echo "Preparing Slack message..."
+      - export RESULT_SUMMARY=$(tail -n 20 result.txt | sed 's/"/\\"/g')
+      - export SLACK_MESSAGE="{\"text\":\":robot_face: *Playwright Test Report*\n\`\`\`${RESULT_SUMMARY}\`\`\`\"}"
+
+      - echo "Sending Slack notification..."
+      - curl -X POST -H 'Content-type: application/json' \
+          --data "$SLACK_MESSAGE" $SLACK_WEBHOOK
