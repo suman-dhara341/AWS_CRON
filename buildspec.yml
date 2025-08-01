@@ -25,20 +25,20 @@ phases:
           --query SecretString \
           --output text | jq -r '.SLACK_WEBHOOK_URL')
 
-      - echo Checking for test failures...
+      - echo Preparing Slack message...
       - |
+        export SUMMARY=$(tail -n 20 result.txt | sed 's/"/\\"/g')
+
         if grep -q "FAIL" result.txt; then
-          echo "❌ Test failures detected. Preparing Slack alert..."
-
-          export SUMMARY=$(tail -n 20 result.txt | sed 's/"/\\"/g')
-          export SLACK_MESSAGE=$(jq -n --arg text ":robot_face: *Playwright Test Report - Failures Detected!*\n\`\`\`$SUMMARY\`\`\`" '{text: $text}')
-
-          echo "Sending Slack notification..."
-          curl -X POST -H 'Content-type: application/json' \
-            --data "$SLACK_MESSAGE" "$SLACK_WEBHOOK"
+          echo "❌ Test failures detected. Sending Slack alert..."
+          export SLACK_MESSAGE=$(jq -n --arg text ":x: *Playwright Test Report - Failures Detected!*\n\`\`\`$SUMMARY\`\`\`" '{text: $text}')
         else
-          echo "✅ All tests passed. No Slack alert sent."
+          echo "✅ All tests passed. Sending success Slack alert..."
+          export SLACK_MESSAGE=$(jq -n --arg text ":white_check_mark: *Playwright Test Report - All tests passed!*\n\`\`\`$SUMMARY\`\`\`" '{text: $text}')
         fi
+
+        curl -X POST -H 'Content-type: application/json' \
+          --data "$SLACK_MESSAGE" "$SLACK_WEBHOOK"
 
 artifacts:
   files:
