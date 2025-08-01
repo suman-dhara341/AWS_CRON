@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./src/tests",
   use: {
-    baseURL: "http://localhost:5173", // 👈 this must match your Vite dev server port
+    baseURL: "https://main.dosl6rwrhoxpw.amplifyapp.com/", // 👈 this must match your Vite dev server port
     headless: true,
   },
   webServer: {

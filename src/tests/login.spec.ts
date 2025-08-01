@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("login should show welcome message", async ({ page }) => {
-  await page.goto("http://localhost:5173");
+  await page.goto("https://main.dosl6rwrhoxpw.amplifyapp.com/");
 
   await page.getByPlaceholder("Enter email").fill("user@example.com");
   await page.getByRole("button", { name: "Login" }).click();
