@@ -1,42 +1,22 @@
-name: Run Playwright Tests
+version: 0.2
 
-on:
-  workflow_dispatch:
-  repository_dispatch:
-    types: [run-playwright]
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing dependencies...
+      - npm ci
+      - echo Installing Playwright browsers...
+      - npx playwright install --with-deps
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+  build:
+    commands:
+      - echo Starting Playwright tests...
+      - npx playwright test --reporter=html
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Run Playwright Tests
-        run: npx playwright test --reporter=html
-
-      - name: Upload Playwright Report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report
-          path: playwright-report
+artifacts:
+  files:
+    - '**/*'
+  base-directory: playwright-report
+  discard-paths: no
