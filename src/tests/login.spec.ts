@@ -17,5 +17,6 @@ test("login should show welcome message", async ({ page }) => {
         message: "An error occurred during the login test",
       })
     );
+    console.log("Hello");
   }
 });
