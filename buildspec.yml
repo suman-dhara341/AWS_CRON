@@ -14,7 +14,6 @@ phases:
 
   build:
     commands:
-      - echo "Run started at $(date '+%Y-%m-%d %H:%M:%S %Z')"  # Cron-specific logging (UTC; adjust for IST if needed)
       - echo Starting Playwright tests...
       - |
         npx playwright test --reporter=html > result.txt || true
@@ -33,21 +32,13 @@ phases:
         if grep -q "FAIL" result.txt; then
           echo "❌ Test failures detected. Sending Slack alert..."
           export SLACK_MESSAGE=$(jq -n --arg text ":x: *Playwright Test Report - Failures Detected!*\n\`\`\`$SUMMARY\`\`\`" '{text: $text}')
-          export FAILURE_RATE=1
         else
           echo "✅ All tests passed. Sending success Slack alert..."
           export SLACK_MESSAGE=$(jq -n --arg text ":white_check_mark: *Playwright Test Report - All tests passed!*\n\`\`\`$SUMMARY\`\`\`" '{text: $text}')
-          export FAILURE_RATE=0
         fi
 
         curl -X POST -H 'Content-type: application/json' \
           --data "$SLACK_MESSAGE" "$SLACK_WEBHOOK"
-
-      - echo Publishing custom metrics to CloudWatch...
-      - aws cloudwatch put-metric-data --metric-name TestFailureRate --namespace PlaywrightTests --value $FAILURE_RATE
-
-      - echo Uploading artifacts to S3...
-      - aws s3 cp playwright-report s3://your-bucket-name/playwright-report/ --recursive  # Replace with your S3 bucket
 
 artifacts:
   files:
